@@ -10,40 +10,40 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        let heartRateType = HKQuantityType.quantityTypeForIdentifier(HKQuantityTypeIdentifierHeartRate)!
+        let heartRateType = HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!
         
         if (HKHealthStore.isHealthDataAvailable()){
             var csvString = "Time,Date,Heartrate(BPM)\n"
-            self.healthStore.requestAuthorizationToShareTypes(nil, readTypes:[heartRateType], completion:{(success, error) in
+            self.healthStore.requestAuthorization(toShare: nil, read:[heartRateType], completion:{(success, error) in
                 let sortByTime = NSSortDescriptor(key:HKSampleSortIdentifierEndDate, ascending:false)
-                let timeFormatter = NSDateFormatter()
+                let timeFormatter = DateFormatter()
                 timeFormatter.dateFormat = "hh:mm:ss"
 
-                let dateFormatter = NSDateFormatter()
+                let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "MM/dd/YYYY"
 
                 let query = HKSampleQuery(sampleType:heartRateType, predicate:nil, limit:600, sortDescriptors:[sortByTime], resultsHandler:{(query, results, error) in
                     guard let results = results else { return }
                     for quantitySample in results {
                         let quantity = (quantitySample as! HKQuantitySample).quantity
-                        let heartRateUnit = HKUnit(fromString: "count/min")
+                        let heartRateUnit = HKUnit(from: "count/min")
                         
 //                        csvString.extend("\(quantity.doubleValueForUnit(heartRateUnit)),\(timeFormatter.stringFromDate(quantitySample.startDate)),\(dateFormatter.stringFromDate(quantitySample.startDate))\n")
 //                        println("\(quantity.doubleValueForUnit(heartRateUnit)),\(timeFormatter.stringFromDate(quantitySample.startDate)),\(dateFormatter.stringFromDate(quantitySample.startDate))")
-                        csvString += "\(timeFormatter.stringFromDate(quantitySample.startDate)),\(dateFormatter.stringFromDate(quantitySample.startDate)),\(quantity.doubleValueForUnit(heartRateUnit))\n"
-                        print("\(timeFormatter.stringFromDate(quantitySample.startDate)),\(dateFormatter.stringFromDate(quantitySample.startDate)),\(quantity.doubleValueForUnit(heartRateUnit))")
+                        csvString += "\(timeFormatter.string(from: quantitySample.startDate)),\(dateFormatter.string(from: quantitySample.startDate)),\(quantity.doubleValue(for: heartRateUnit))\n"
+                        print("\(timeFormatter.string(from: quantitySample.startDate)),\(dateFormatter.string(from: quantitySample.startDate)),\(quantity.doubleValue(for: heartRateUnit))")
                     }
                     
                     do {
-                        let documentsDir = try NSFileManager.defaultManager().URLForDirectory(.DocumentDirectory, inDomain:.UserDomainMask, appropriateForURL:nil, create:true)
-                        try csvString.writeToURL(NSURL(string:"heartratedata.csv", relativeToURL:documentsDir)!, atomically:true, encoding:NSASCIIStringEncoding)
+                        let documentsDir = try FileManager.default.url(for: .documentDirectory, in:.userDomainMask, appropriateFor:nil, create:true)
+                        try csvString.write(to: URL(string:"heartratedata.csv", relativeTo:documentsDir)!, atomically:true, encoding:String.Encoding.ascii)
                     }
                     catch {
                         print("Error occured")
                     }
                     
                 })
-                self.healthStore.executeQuery(query)
+                self.healthStore.execute(query)
             })
         }
     }
